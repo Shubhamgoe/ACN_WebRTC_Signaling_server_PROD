@@ -106,4 +106,23 @@ io.on("connection", socket => {
         }
         delete socketToRoom[socket.id];
     });
+
+    socket.on("media_state_change", ({ audio, video }) => {
+        const roomId = socketToRoom[socket.id];
+        if (roomId) {
+            // Broadcast the media state change to all users in the room
+            socket.broadcast.to(roomId).emit("media_state_change", {
+                userId: socket.id,
+                audio,
+                video
+            });
+            
+            // Update the user's media state in the rooms object
+            const user = rooms[roomId]?.find(u => u.id === socket.id);
+            if (user) {
+                user.audio = audio;
+                user.video = video;
+            }
+        }
+    });
 });
