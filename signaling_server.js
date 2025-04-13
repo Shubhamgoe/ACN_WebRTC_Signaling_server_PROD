@@ -12,9 +12,9 @@ app.get('/', (req, res) => {
     res.send('hello, world');
 })
 
-const server = app.listen(4000, () => {
-    console.log('server is running on http://localhost:4000')
-})
+const server = app.listen(4000, '0.0.0.0', () => {
+    console.log('server is running on port 4000');
+});
 
 const io = new Server(server, {
     cors: {
