@@ -107,22 +107,54 @@ io.on("connection", socket => {
         delete socketToRoom[socket.id];
     });
 
-    socket.on("media_state_change", ({ audio, video }) => {
+    socket.on("media_state_change", ({ userId, senderid, audio, video }) => {
         const roomId = socketToRoom[socket.id];
+        
         if (roomId) {
+            // Update the user's media state in the rooms object
+            if (userId != "send_to_all"){
+                const user = rooms[roomId]?.find(u => u.id === userId);
+                if (user) {
+                    user.audio = audio;
+                    user.video = video;
+                }
+                console.log(`[media_state_change] ${senderid} audio: ${audio}, video: ${video}`);
+            }
+            
             // Broadcast the media state change to all users in the room
             socket.broadcast.to(roomId).emit("media_state_change", {
-                userId: socket.id,
+                sender: senderid,
                 audio,
                 video
             });
-            
-            // Update the user's media state in the rooms object
-            const user = rooms[roomId]?.find(u => u.id === socket.id);
-            if (user) {
-                user.audio = audio;
-                user.video = video;
-            }
+        }
+    });
+
+    socket.on("request_media_state", ({ target }) => {
+        const roomId = socketToRoom[socket.id];
+        if (roomId && target) {
+            // Forward the request to the target user
+            socket.to(target).emit("request_media_state", { sender: socket.id });
+        }
+    });
+
+    socket.on("chat_message", (message) => {
+        const roomId = socketToRoom[socket.id];
+        if (roomId) {
+            // Broadcast the message to all users in the room
+            socket.broadcast.to(roomId).emit("chat_message", {
+                ...message,
+                sender: socket.id,
+                senderName: message.senderName || `User-${socket.id.slice(0, 6)}`
+            });
+        }
+    });
+
+    socket.on("media_state_request", ({ target }) => {
+        const roomId = socketToRoom[socket.id];
+        if (roomId && target) {
+            // Forward the request to the target user
+            socket.to(target).emit("media_state_request", { requesterid: socket.id });
         }
     });
 });
