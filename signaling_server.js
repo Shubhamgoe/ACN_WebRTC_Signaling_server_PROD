@@ -157,4 +157,19 @@ io.on("connection", socket => {
             socket.to(target).emit("media_state_request", { requesterid: socket.id });
         }
     });
+
+    // On your signaling server
+    socket.on("video_mute_request", ({ target, shouldMute }) => {
+        socket.to(target).emit("video_mute_request", { 
+        sender: socket.id, 
+        shouldMute 
+        });
+    });
+    
+    socket.on("video_mute_response", ({ target, muted }) => {
+        socket.to(target).emit("video_mute_response", { 
+        sender: socket.id, 
+        muted 
+        });
+    });
 });
